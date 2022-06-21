@@ -21,11 +21,8 @@ func main() {
 
 	manager := houses.NewHouseManager(client, storage)
 
-	for {
-		err := manager.GetAllHouses(ctx)
-		if err == nil {
-			break
-		}
+	err = manager.GetAllHouses(ctx)
+	if err != nil {
+		panic(err)
 	}
-
 }
