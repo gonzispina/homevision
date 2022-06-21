@@ -12,7 +12,6 @@ type HouseGetter interface {
 }
 
 type HouseSaver interface {
-	SaveHouse(ctx context.Context, h *House)
 	SaveFile(ctx context.Context, h *House, content io.ReadCloser) error
 }
 
@@ -44,7 +43,6 @@ func (m *houseManager) GetAllHouses(ctx context.Context) error {
 	pages := 5
 
 	wg := sync.WaitGroup{}
-
 	for page := 1; page <= pages; page++ {
 		houses, err := m.getter.GetHousesPaged(ctx, page, offset)
 		if err != nil {
@@ -56,9 +54,6 @@ func (m *houseManager) GetAllHouses(ctx context.Context) error {
 
 			go func(i int, h *House) {
 				defer wg.Done()
-				// Save to retry later
-				m.saver.SaveHouse(ctx, h)
-
 				photo, err := m.getter.GetHousePhoto(ctx, h.PhotoURL)
 				if err != nil {
 					return

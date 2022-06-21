@@ -9,7 +9,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sync"
 )
 
 type entry struct {
@@ -35,7 +34,6 @@ func NewHousesStorage(config *HouseStorageConfig, logger logs.Logger) *HousesSto
 	}
 	return &HousesStorage{
 		config: config,
-		houses: &sync.Map{},
 		logger: logger,
 	}
 }
@@ -43,7 +41,6 @@ func NewHousesStorage(config *HouseStorageConfig, logger logs.Logger) *HousesSto
 // HousesStorage In memory storage
 type HousesStorage struct {
 	config *HouseStorageConfig
-	houses *sync.Map
 	logger logs.Logger
 }
 
@@ -66,13 +63,6 @@ func (s *HousesStorage) Setup(ctx context.Context) error {
 	return nil
 }
 
-func (s *HousesStorage) SaveHouse(_ context.Context, h *houses.House) {
-	s.houses.Store(h.ID, &entry{
-		House:    h,
-		FilePath: "",
-	})
-}
-
 func (s *HousesStorage) SaveFile(ctx context.Context, h *houses.House, content io.ReadCloser) error {
 	defer content.Close()
 
@@ -90,11 +80,6 @@ func (s *HousesStorage) SaveFile(ctx context.Context, h *houses.House, content i
 		s.logger.Info(ctx, "Couldn't write file", logs.Error(err))
 		return err
 	}
-
-	s.houses.Store(h.ID, &entry{
-		House:    h,
-		FilePath: filepath,
-	})
 
 	return nil
 }
