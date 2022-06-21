@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gonzispina/gokit/context"
+	"github.com/gonzispina/gokit/errors"
 	"github.com/gonzispina/gokit/logs"
 	"homevision/internal/houses"
 	"io"
@@ -59,7 +60,7 @@ func (c *APIClient) GetHousesPaged(ctx context.Context, page, offset int) ([]*ho
 	}
 
 	var res *http.Response
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 10; i++ {
 		req = req.WithContext(ctx)
 		res, err = c.client.Do(req)
 		if err != nil {
@@ -71,15 +72,16 @@ func (c *APIClient) GetHousesPaged(ctx context.Context, page, offset int) ([]*ho
 			break
 		}
 
+		c.logger.Info(ctx, fmt.Sprintf("Received Invalid response. StatusCode %v", res.StatusCode))
 		_ = res.Body.Close()
-		c.logger.Info(ctx, "Received Invalid response")
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		c.logger.Warn(ctx, fmt.Sprintf("Couldn't process page %v. Please retry later.", page))
+		return nil, errors.New("Unable to process page", "UnableToProcessPage")
+	}
+
 	var r struct {
 		Houses []*houses.House `json:"houses"`
 	}
